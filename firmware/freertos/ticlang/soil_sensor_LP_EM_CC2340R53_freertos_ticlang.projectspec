@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectSpec>
+    <applicability>
+        <when>
+            <context
+                deviceFamily="ARM"
+                deviceId="Cortex M.CC2340R53"
+            />
+        </when>
+    </applicability>
+
+    <project
+        title="soil_sensor app"
+        name="soil_sensor_LP_EM_CC2340R53_freertos_ticlang"
+        configurations="Release, Debug"
+        toolChain="TICLANG"
+        connection="TIXDS110_Connection.xml"
+        device="Cortex M.CC2340R53"
+        ignoreDefaultDeviceSettings="true"
+        ignoreDefaultCCSSettings="true"
+        products="com.ti.SIMPLELINK_LOWPOWER_F3_SDK;sysconfig"
+        compilerBuildOptions="
+            -I${PROJECT_ROOT}
+            -I${PROJECT_ROOT}/${ConfigName}
+            -I${PROJECT_LOC}/app
+            -DICALL_NO_APP_EVENTS
+            -mthumb
+            -mlittle-endian
+            -std=gnu99
+            -std=c99
+            -ffunction-sections
+            -g
+            -Oz
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/cc26xx
+            @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/config/build_components.opt
+            @${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/config/factory_config.opt
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mbedtls/include
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mbedtls/ti
+            -DMBEDTLS_CONFIG_FILE=&quot;configs/config-hsm.h&quot;
+            -DMBEDTLS_PSA_CRYPTO_CONFIG_FILE=&quot;configs/config-psa-crypto-hsm.h&quot;
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/boot/bootutil/include
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/mcuboot/boot/ti/source/mcuboot_app
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/cc26xx/flash_interface
+            -DNVOCMP_NVPAGES=6
+            -DNVOCMP_POSIX_MUTEX
+            -DNVOCMP_NWSAMEITEM=1
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/drivers/rcl
+            -Wunused-function
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/posix/ticlang
+            -DFREERTOS
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/kernel/freertos
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/include
+            -I${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/third_party/freertos/portable/GCC/ARM_CM0
+            -mcpu=cortex-m0plus
+            -march=thumbv6m
+            -mfloat-abi=soft
+            -Wall
+        "
+        linkerBuildOptions="
+            -Wl,--diag_wrap=off
+            -Wl,--display_error_number
+            -Wl,-x
+            -Wl,-c
+            -L${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source
+            -L${PROJECT_BUILD_DIR}/syscfg
+            -lti_utils_build_linker.cmd.genlibs
+            -Wl,--rom_model
+            -Wl,--warn_sections
+            -L${CG_TOOL_ROOT}/lib
+            -llibc.a
+        "
+        preBuildStep="
+            ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/ble/oad/commands_runner --cfg_file ${SYSCONFIG_TOOL_OUTPUT_DIR}/ti_ble_oad_prebuild.cfg --compiler ticlang --build_dir ${BuildDirectory} --gmake_dir ${CCS_INSTALL_ROOT}/utils/bin/gmake --sysconfig_cli ${SYSCONFIG_TOOL} --execute_sysconfig --sdk_dir ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}
+        "
+        postBuildStep="
+            ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/common/crc_tool/crc_tool patch-image --elf ${BuildArtifactFileBaseName}.out --symbol-prefix ti_utils_build_GenMap_sym_CRC_CCFG -o ${BuildArtifactFileBaseName}.out;
+            ${CG_TOOL_ROOT}/bin/tiarmobjcopy -O ihex ${BuildArtifactFileBaseName}.out ${BuildArtifactFileBaseName}.hex;
+            ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/tools/ble/oad/commands_runner --cfg_file ${SYSCONFIG_TOOL_OUTPUT_DIR}/ti_ble_oad_postbuild.cfg --compiler ticlang --cg_tool_root ${CG_TOOL_ROOT} --build_dir ${BuildDirectory} --base_name ${BuildArtifactFileBaseName} --sdk_dir ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}
+        "
+        sysConfigBuildOptions="
+            --product ${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/.metadata/product.json
+            --compiler ticlang
+        "
+        description="Soil moisture sensor BLE peripheral">
+        <property name="buildProfile" value="release"/>
+        <property name="isHybrid" value="true"/>
+        <file path="../../README.html" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../app/app_main.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_menu.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/Profiles/app_dev_info.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/services/dev_info/dev_info_service.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Services/dev_info">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/services/dev_info/src/dev_info_service.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Services/dev_info">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/framework/bleapputil_api.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil/inc">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/framework/bleapputil_timers.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil/inc">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/framework/src/bleapputil_task.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/framework/src/bleapputil_init.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/framework/src/bleapputil_process.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/framework/src/bleapputil_stack_callbacks.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/framework/src/bleapputil_timers.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/BLEAppUtil">
+        </file>
+        <file path="../../common/Startup/osal_icall_ble.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="common/Startup">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/rom_init.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Startup">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_rssi_monitor.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_connection_handover.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_dmm.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_dmm_dynamic_priority.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_ts_periodic.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_cm.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_health_check.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_ble_health.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_padv.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_pscan.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_pawr_scan.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_pawr_advertiser.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_cs.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_cs_test.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_initiator.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_connectable.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_scanner.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_power_control.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_adv_conn.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_adv_nconn.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_ae.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_adaptivity.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_past_sender.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_past_receiver.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_vendor_specific_cmd.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_ext_vendor_specific_cmd.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_coex.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/ctrl_opt_legacy_cmd.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/host_opt_gap_bond_mgr.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/host_opt_gap_pawr_scan.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/host_opt_gap_pawr_adv.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/host_opt_gap_past_receiver.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/lib_opt/src/host_opt_gap_past_sender.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/lib_opt">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/crc.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/crc.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/nvocmp.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/nvocmp.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/nv/nvintf.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Drivers/NV">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/icall.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/icall_addrs.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/src/icall.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/icall_platform.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/src/icall_user_config.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/icall_user_config.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/config/src/ble_user_config.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/config">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/config/ble_user_config.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/config">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/config/src/hci_supported_cmd.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/config">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/controller/hci/hci_supported_cmd.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/config">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/icall_ble_apimsg.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCallBLE">
+        </file>
+        <file path="../../app/app_main.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_peripheral.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_connection.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_data.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/app_soil_sensor.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/soil_sensor.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/soil_sensor.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/soil_history.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/soil_history.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/common/src/util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/common/util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/health_toolkit/debugInfo.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="HealthToolkit/inc">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/health_toolkit/debugInfo_errno.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="HealthToolkit/inc">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/health_toolkit/ble_sys_stat.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="HealthToolkit/inc">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/health_toolkit/src/debugInfo.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="HealthToolkit">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/health_toolkit/src/ble_sys_stat.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="HealthToolkit">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/menu/menu_module.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/menu/src/menu_module.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/MenuModule">
+        </file>
+        <file path="../../app/Profiles/soil_sensor_profile.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
+        <file path="../../app/Profiles/soil_sensor_profile.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
+        <file path="../../freertos/soil_sensor.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/stack_util/icall/app/src/icall_POSIX.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/iCall">
+        </file>
+        <file path="../../common/Startup/main_freertos.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/boards/LP_EM_CC2340R53/Board.html" openOnCreation="false" excludeFromBuild="false" action="link">
+        </file>
+        <file path="../../freertos/ticlang/cc2340_freertos.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+    </project>
+</projectSpec>
