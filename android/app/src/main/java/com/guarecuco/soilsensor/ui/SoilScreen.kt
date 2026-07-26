@@ -13,8 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import android.content.Intent
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
@@ -22,8 +27,10 @@ import androidx.compose.material.icons.filled.BluetoothSearching
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +62,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.guarecuco.soilsensor.R
 import com.guarecuco.soilsensor.ble.DiscoveredDevice
+import com.guarecuco.soilsensor.ble.OadProgress
 import com.guarecuco.soilsensor.ble.SoilConnectionState
+import com.guarecuco.soilsensor.ble.parseImageVersion
 import com.guarecuco.soilsensor.data.SoilReadingEntity
 import com.guarecuco.soilsensor.data.buildCsvShareIntent
 import java.text.SimpleDateFormat
@@ -92,12 +102,74 @@ private fun computePeriod(range: ChartRange, offset: Int): Period {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SoilScreen(viewModel: SoilViewModel, onRequestConnect: () -> Unit) {
+fun SoilScreen(viewModel: SoilViewModel, onRequestConnect: () -> Unit, onRefresh: () -> Unit) {
     val connectionState by viewModel.connectionState.collectAsState()
     val discoveredDevices by viewModel.discoveredDevices.collectAsState()
     val connectedDeviceName by viewModel.connectedDeviceName.collectAsState()
     val connectedDeviceAddress by viewModel.connectedDeviceAddress.collectAsState()
     val readings by viewModel.readings.collectAsState()
+    val batteryPercent by viewModel.batteryPercent.collectAsState()
+    val batteryCharging by viewModel.batteryCharging.collectAsState()
+    val firmwareVersion by viewModel.firmwareVersion.collectAsState()
+    val oadProgress by viewModel.oadProgress.collectAsState()
+    val isRefreshing = connectionState is SoilConnectionState.Connecting ||
+        connectionState is SoilConnectionState.SyncingHistory
+
+    val context = LocalContext.current
+    var pendingUpdateVersion by remember { mutableStateOf<String?>(null) }
+    // Set once a picked file is parsed successfully; cleared on confirm or
+    // cancel. Its presence is what shows the confirmation dialog below -
+    // startOadUpdate() isn't called until the user explicitly confirms.
+    var pendingUpdateBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var pendingUpdateError by remember { mutableStateOf<String?>(null) }
+    val firmwarePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            if (bytes == null) {
+                pendingUpdateError = "Could not read the selected file."
+            } else {
+                val version = parseImageVersion(bytes)
+                if (version == null) {
+                    pendingUpdateError = "Not a valid signed firmware image."
+                } else {
+                    pendingUpdateVersion = version
+                    pendingUpdateBytes = bytes
+                }
+            }
+        }
+    }
+    var oadDialogDismissed by remember { mutableStateOf(false) }
+    LaunchedEffect(oadProgress) {
+        if (oadProgress == OadProgress.ResettingToPersistent) {
+            oadDialogDismissed = false
+        }
+    }
+
+    pendingUpdateBytes?.let { bytes ->
+        FirmwareConfirmDialog(
+            version = pendingUpdateVersion ?: "unknown",
+            sizeBytes = bytes.size,
+            onConfirm = {
+                viewModel.startOadUpdate(bytes)
+                pendingUpdateBytes = null
+            },
+            onCancel = {
+                pendingUpdateBytes = null
+                pendingUpdateVersion = null
+            },
+        )
+    }
+    pendingUpdateError?.let { message ->
+        AlertDialog(
+            onDismissRequest = { pendingUpdateError = null },
+            confirmButton = { TextButton(onClick = { pendingUpdateError = null }) { Text("OK") } },
+            title = { Text("Firmware Update") },
+            text = { Text(message) },
+        )
+    }
+    if (oadProgress !is OadProgress.Idle && !oadDialogDismissed) {
+        OadProgressDialog(oadProgress, pendingUpdateVersion) { oadDialogDismissed = true }
+    }
 
     Scaffold(
         topBar = {
@@ -106,93 +178,100 @@ fun SoilScreen(viewModel: SoilViewModel, onRequestConnect: () -> Unit) {
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Spacer(modifier = Modifier.height(4.dp))
 
-            ConnectionCard(
-                state = connectionState,
-                deviceName = connectedDeviceName,
-                deviceAddress = connectedDeviceAddress,
-                onConnectClick = onRequestConnect,
-                onDisconnectClick = { viewModel.disconnect() },
-            )
+                ConnectionCard(
+                    state = connectionState,
+                    deviceName = connectedDeviceName,
+                    deviceAddress = connectedDeviceAddress,
+                    firmwareVersion = firmwareVersion,
+                    onConnectClick = onRequestConnect,
+                    onDisconnectClick = { viewModel.disconnect() },
+                    onFirmwareUpdateClick = { firmwarePicker.launch(arrayOf("*/*")) },
+                )
 
-            if (connectionState is SoilConnectionState.Scanning) {
-                DeviceList(discoveredDevices) { device -> viewModel.connectToDevice(device.address, device.name) }
-            }
+                if (connectionState is SoilConnectionState.Scanning) {
+                    DeviceList(discoveredDevices) { device -> viewModel.connectToDevice(device.address, device.name) }
+                }
 
-            val latest = readings.lastOrNull()
-            if (latest != null) {
-                CurrentReadingRow(latest)
-                WateringAdviceCard(latest.moistureRaw)
-            }
+                val latest = readings.lastOrNull()
+                if (latest != null) {
+                    CurrentReadingRow(latest, batteryPercent, batteryCharging)
+                    WateringAdviceCard(latest.moistureRaw)
+                }
 
-            if (readings.size >= 2) {
-                val context = LocalContext.current
-                var range by remember { mutableStateOf(ChartRange.DAY) }
-                var offset by remember(range) { mutableStateOf(0) }
-                val period = remember(range, offset) { computePeriod(range, offset) }
-                val windowed = readings.filter { it.timestampMillis >= period.startMillis && it.timestampMillis < period.endMillis }
-                val canGoForward = offset < 0
-                val canGoBack = readings.first().timestampMillis < period.startMillis
+                if (readings.size >= 2) {
+                    var range by remember { mutableStateOf(ChartRange.DAY) }
+                    var offset by remember(range) { mutableStateOf(0) }
+                    val period = remember(range, offset) { computePeriod(range, offset) }
+                    val windowed = readings.filter { it.timestampMillis >= period.startMillis && it.timestampMillis < period.endMillis }
+                    val canGoForward = offset < 0
+                    val canGoBack = readings.first().timestampMillis < period.startMillis
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "History (${readings.size} samples total)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "History (${readings.size} samples total)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            IconButton(onClick = {
+                                val intent = buildCsvShareIntent(context, readings)
+                                context.startActivity(Intent.createChooser(intent, "Export soil history"))
+                            }) {
+                                Icon(imageVector = Icons.Filled.FileDownload, contentDescription = "Export CSV")
+                            }
+                        }
+
+                        RangeToggle(range) { range = it }
+
+                        PeriodNavigator(
+                            label = period.label,
+                            canGoBack = canGoBack,
+                            canGoForward = canGoForward,
+                            onBack = { offset -= 1 },
+                            onForward = { offset += 1 },
                         )
-                        IconButton(onClick = {
-                            val intent = buildCsvShareIntent(context, readings)
-                            context.startActivity(Intent.createChooser(intent, "Export soil history"))
-                        }) {
-                            Icon(imageVector = Icons.Filled.FileDownload, contentDescription = "Export CSV")
+
+                        ChartLegend()
+
+                        if (windowed.size >= 2) {
+                            SoilChart(
+                                readings = windowed,
+                                periodStart = period.startMillis,
+                                periodEnd = period.endMillis,
+                                binCount = period.binCount,
+                                isDayView = range == ChartRange.DAY,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            Text(
+                                text = "Not enough samples in this period",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(vertical = 24.dp),
+                            )
                         }
                     }
-
-                    RangeToggle(range) { range = it }
-
-                    PeriodNavigator(
-                        label = period.label,
-                        canGoBack = canGoBack,
-                        canGoForward = canGoForward,
-                        onBack = { offset -= 1 },
-                        onForward = { offset += 1 },
-                    )
-
-                    ChartLegend()
-
-                    if (windowed.size >= 2) {
-                        SoilChart(
-                            readings = windowed,
-                            periodStart = period.startMillis,
-                            periodEnd = period.endMillis,
-                            binCount = period.binCount,
-                            isDayView = range == ChartRange.DAY,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    } else {
-                        Text(
-                            text = "Not enough samples in this period",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(vertical = 24.dp),
-                        )
-                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }
@@ -202,8 +281,10 @@ private fun ConnectionCard(
     state: SoilConnectionState,
     deviceName: String?,
     deviceAddress: String?,
+    firmwareVersion: String?,
     onConnectClick: () -> Unit,
     onDisconnectClick: () -> Unit,
+    onFirmwareUpdateClick: () -> Unit,
 ) {
     Card(colors = CardDefaults.elevatedCardColors(), elevation = CardDefaults.cardElevation(2.dp)) {
         Row(
@@ -219,11 +300,21 @@ private fun ConnectionCard(
                     connectionSubtitle(state, deviceName, deviceAddress)?.let {
                         Text(text = it, style = MaterialTheme.typography.bodySmall)
                     }
+                    if (state is SoilConnectionState.Ready && firmwareVersion != null) {
+                        Text(text = "FW v$firmwareVersion", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
 
             when (state) {
-                is SoilConnectionState.Ready -> TextButton(onClick = onDisconnectClick) { Text("Disconnect") }
+                is SoilConnectionState.Ready -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Dev/testing entry point for pushing a signed firmware
+                    // image over BLE OAD - see OadUpdateManager.
+                    IconButton(onClick = onFirmwareUpdateClick) {
+                        Icon(imageVector = Icons.Filled.SystemUpdate, contentDescription = "Update firmware")
+                    }
+                    TextButton(onClick = onDisconnectClick) { Text("Disconnect") }
+                }
                 SoilConnectionState.Scanning, SoilConnectionState.Connecting, SoilConnectionState.SyncingHistory ->
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 else -> TextButton(onClick = onConnectClick) { Text("Scan") }
@@ -299,7 +390,7 @@ private fun DeviceList(devices: List<DiscoveredDevice>, onSelect: (DiscoveredDev
 }
 
 @Composable
-private fun CurrentReadingRow(latest: SoilReadingEntity) {
+private fun CurrentReadingRow(latest: SoilReadingEntity, batteryPercent: Int?, batteryCharging: Boolean?) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         StatCard(
             modifier = Modifier.weight(1f),
@@ -316,8 +407,15 @@ private fun CurrentReadingRow(latest: SoilReadingEntity) {
             tint = Color(0xFFEF6C00),
         )
     }
+    val updatedText = "Updated " + SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(latest.timestampMillis))
+    val batteryText = if (batteryPercent != null) {
+        val charging = if (batteryCharging == true) " (charging)" else ""
+        " · Battery $batteryPercent%$charging"
+    } else {
+        ""
+    }
     Text(
-        text = "Updated " + SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(latest.timestampMillis)),
+        text = "$updatedText$batteryText",
         style = MaterialTheme.typography.bodySmall,
         modifier = Modifier.padding(top = 4.dp),
     )
@@ -417,4 +515,66 @@ private fun LegendDot(color: Color, label: String) {
         Spacer(modifier = Modifier.width(6.dp))
         Text(text = label, style = MaterialTheme.typography.bodySmall)
     }
+}
+
+/**
+ * Shown right after a file is picked, before anything is sent to the
+ * device - lets the user back out if they grabbed the wrong .bin.
+ */
+@Composable
+private fun FirmwareConfirmDialog(version: String, sizeBytes: Int, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Update") } },
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
+        title = { Text("Firmware Update") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(text = "Version: v$version", fontWeight = FontWeight.Medium)
+                Text(text = "Size: ${sizeBytes / 1024} KB")
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Update the connected sensor to this firmware?")
+            }
+        },
+    )
+}
+
+/**
+ * Dev/testing dialog for the BLE OAD firmware update flow (see
+ * OadUpdateManager). Only shown once a transfer has actually started;
+ * dismissible once it reaches a terminal state (Success/Failed).
+ */
+@Composable
+private fun OadProgressDialog(progress: OadProgress, targetVersion: String?, onDismiss: () -> Unit) {
+    val message = when (progress) {
+        OadProgress.Idle -> return
+        OadProgress.ResettingToPersistent -> "Rebooting device into update mode..."
+        OadProgress.ReconnectingToPersistent -> "Waiting for device to re-advertise..."
+        is OadProgress.Transferring -> "Transferring block ${progress.block}/${progress.totalBlocks}"
+        OadProgress.EnablingImage -> "Finishing up - enabling new image..."
+        OadProgress.Success -> "Update complete. Device is rebooting into the new firmware."
+        is OadProgress.Failed -> "Update failed: ${progress.message}"
+    }
+    val dismissible = progress is OadProgress.Success || progress is OadProgress.Failed
+
+    AlertDialog(
+        onDismissRequest = { if (dismissible) onDismiss() },
+        confirmButton = {
+            if (dismissible) {
+                TextButton(onClick = onDismiss) { Text("OK") }
+            }
+        },
+        title = { Text("Firmware Update") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (targetVersion != null) {
+                    Text(text = "Updating to v$targetVersion", fontWeight = FontWeight.Medium)
+                }
+                Text(message)
+                if (!dismissible) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                }
+            }
+        },
+    )
 }

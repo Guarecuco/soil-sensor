@@ -20,7 +20,7 @@ ifeq ($(VERBOSE), 1)
   V :=
 endif
 
-OBJECTS = app_app_main.obj app_app_menu.obj app_Profiles_app_dev_info.obj common_Services_dev_info_dev_info_service.obj common_BLEAppUtil_bleapputil_task.obj common_BLEAppUtil_bleapputil_init.obj common_BLEAppUtil_bleapputil_process.obj common_BLEAppUtil_bleapputil_stack_callbacks.obj common_BLEAppUtil_bleapputil_timers.obj common_Startup_osal_icall_ble.obj common_Startup_rom_init.obj common_lib_opt_ctrl_opt_rssi_monitor.obj common_lib_opt_ctrl_opt_connection_handover.obj common_lib_opt_ctrl_opt_dmm.obj common_lib_opt_ctrl_opt_dmm_dynamic_priority.obj common_lib_opt_ctrl_opt_ts_periodic.obj common_lib_opt_ctrl_opt_cm.obj common_lib_opt_ctrl_opt_health_check.obj common_lib_opt_ctrl_opt_ble_health.obj common_lib_opt_ctrl_opt_padv.obj common_lib_opt_ctrl_opt_pscan.obj common_lib_opt_ctrl_opt_pawr_scan.obj common_lib_opt_ctrl_opt_pawr_advertiser.obj common_lib_opt_ctrl_opt_cs.obj common_lib_opt_ctrl_opt_cs_test.obj common_lib_opt_ctrl_opt_initiator.obj common_lib_opt_ctrl_opt_connectable.obj common_lib_opt_ctrl_opt_scanner.obj common_lib_opt_ctrl_opt_power_control.obj common_lib_opt_ctrl_opt_adv_conn.obj common_lib_opt_ctrl_opt_adv_nconn.obj common_lib_opt_ctrl_opt_ae.obj common_lib_opt_ctrl_opt_adaptivity.obj common_lib_opt_ctrl_opt_past_sender.obj common_lib_opt_ctrl_opt_past_receiver.obj common_lib_opt_ctrl_opt_vendor_specific_cmd.obj common_lib_opt_ctrl_opt_ext_vendor_specific_cmd.obj common_lib_opt_ctrl_opt_coex.obj common_lib_opt_ctrl_opt_legacy_cmd.obj common_lib_opt_host_opt_gap_bond_mgr.obj common_lib_opt_host_opt_gap_pawr_scan.obj common_lib_opt_host_opt_gap_pawr_adv.obj common_lib_opt_host_opt_gap_past_receiver.obj common_lib_opt_host_opt_gap_past_sender.obj common_Drivers_NV_crc.obj common_Drivers_NV_nvocmp.obj common_iCall_icall.obj common_iCall_icall_user_config.obj common_config_ble_user_config.obj common_config_hci_supported_cmd.obj app_app_peripheral.obj app_app_connection.obj app_app_data.obj app_soil_sensor.obj app_app_soil_sensor.obj app_soil_history.obj app_Profiles_soil_sensor_profile.obj common_Util_util.obj HealthToolkit_debugInfo.obj HealthToolkit_ble_sys_stat.obj common_MenuModule_menu_module.obj common_iCall_icall_POSIX.obj common_Startup_main_freertos.obj $(patsubst %.c,%.obj,$(notdir $(SYSCFG_C_FILES)))
+OBJECTS = app_app_main.obj app_app_menu.obj app_Profiles_app_dev_info.obj common_Services_dev_info_dev_info_service.obj common_BLEAppUtil_bleapputil_task.obj common_BLEAppUtil_bleapputil_init.obj common_BLEAppUtil_bleapputil_process.obj common_BLEAppUtil_bleapputil_stack_callbacks.obj common_BLEAppUtil_bleapputil_timers.obj common_Startup_osal_icall_ble.obj common_Startup_rom_init.obj common_lib_opt_ctrl_opt_rssi_monitor.obj common_lib_opt_ctrl_opt_connection_handover.obj common_lib_opt_ctrl_opt_dmm.obj common_lib_opt_ctrl_opt_dmm_dynamic_priority.obj common_lib_opt_ctrl_opt_ts_periodic.obj common_lib_opt_ctrl_opt_cm.obj common_lib_opt_ctrl_opt_health_check.obj common_lib_opt_ctrl_opt_ble_health.obj common_lib_opt_ctrl_opt_padv.obj common_lib_opt_ctrl_opt_pscan.obj common_lib_opt_ctrl_opt_pawr_scan.obj common_lib_opt_ctrl_opt_pawr_advertiser.obj common_lib_opt_ctrl_opt_cs.obj common_lib_opt_ctrl_opt_cs_test.obj common_lib_opt_ctrl_opt_initiator.obj common_lib_opt_ctrl_opt_connectable.obj common_lib_opt_ctrl_opt_scanner.obj common_lib_opt_ctrl_opt_power_control.obj common_lib_opt_ctrl_opt_adv_conn.obj common_lib_opt_ctrl_opt_adv_nconn.obj common_lib_opt_ctrl_opt_ae.obj common_lib_opt_ctrl_opt_adaptivity.obj common_lib_opt_ctrl_opt_past_sender.obj common_lib_opt_ctrl_opt_past_receiver.obj common_lib_opt_ctrl_opt_vendor_specific_cmd.obj common_lib_opt_ctrl_opt_ext_vendor_specific_cmd.obj common_lib_opt_ctrl_opt_coex.obj common_lib_opt_ctrl_opt_legacy_cmd.obj common_lib_opt_host_opt_gap_bond_mgr.obj common_lib_opt_host_opt_gap_pawr_scan.obj common_lib_opt_host_opt_gap_pawr_adv.obj common_lib_opt_host_opt_gap_past_receiver.obj common_lib_opt_host_opt_gap_past_sender.obj common_Drivers_NV_crc.obj common_Drivers_NV_nvocmp.obj common_iCall_icall.obj common_iCall_icall_user_config.obj common_config_ble_user_config.obj common_config_hci_supported_cmd.obj app_app_peripheral.obj app_app_connection.obj app_app_data.obj app_soil_sensor.obj app_battery_gauge.obj app_app_soil_sensor.obj app_soil_history.obj app_Profiles_soil_sensor_profile.obj app_Profiles_battery_service.obj app_Profiles_app_oad.obj common_Services_oad_oad_service.obj common_Services_oad_oad_reset_service.obj common_Profiles_oad_oad_profile.obj common_Profiles_oad_ms_oad_profile.obj common_Util_SwUpdate_sw_update.obj common_Util_SwUpdate_flash_interface_oad.obj common_Util_util.obj HealthToolkit_debugInfo.obj HealthToolkit_ble_sys_stat.obj common_MenuModule_menu_module.obj common_iCall_icall_POSIX.obj common_Startup_main_freertos.obj $(patsubst %.c,%.obj,$(notdir $(SYSCFG_C_FILES)))
 
 NAME = soil_sensor
 
@@ -342,6 +342,11 @@ app_soil_sensor.obj: ../../app/soil_sensor.c $(SYSCFG_H_FILES) prebuild
 	@ echo Building $@
 	$(V) $(CC) $(CFLAGS) -c $< -o $@
 
+app_battery_gauge.obj: ../../app/battery_gauge.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+
 common_Util_util.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble/app_util/common/src/util.c $(SYSCFG_H_FILES) prebuild
 	@ echo Building $@
 	$(V) $(CC) $(CFLAGS) -c $< -o $@
@@ -367,6 +372,38 @@ app_soil_history.obj: ../../app/soil_history.c $(SYSCFG_H_FILES) prebuild
 	$(V) $(CC) $(CFLAGS) -c $< -o $@
 
 app_Profiles_soil_sensor_profile.obj: ../../app/Profiles/soil_sensor_profile.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+app_Profiles_battery_service.obj: ../../app/Profiles/battery_service.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+app_Profiles_app_oad.obj: ../../app/Profiles/app_oad.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+common_Services_oad_oad_service.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble/services/oad/src/oad_service.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+common_Services_oad_oad_reset_service.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble/services/oad/src/oad_reset_service.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+common_Profiles_oad_oad_profile.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble/profiles/oad/src/oad_profile.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+common_Profiles_oad_ms_oad_profile.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble/profiles/oad/src/ms_oad_profile.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+common_Util_SwUpdate_sw_update.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble/app_util/sw_update/src/sw_update.c $(SYSCFG_H_FILES) prebuild
+	@ echo Building $@
+	$(V) $(CC) $(CFLAGS) -c $< -o $@
+
+common_Util_SwUpdate_flash_interface_oad.obj: $(SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR)/source/ti/ble/app_util/sw_update/src/flash_interface_oad.c $(SYSCFG_H_FILES) prebuild
 	@ echo Building $@
 	$(V) $(CC) $(CFLAGS) -c $< -o $@
 

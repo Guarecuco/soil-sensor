@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <ti/drivers/I2C.h>
+
 /* Default I2C address (selectable 0x36-0x39 via the sensor's AD0/AD1 solder jumpers) */
 #define SOIL_SENSOR_I2C_ADDRESS 0x36
 
@@ -30,5 +32,13 @@ bool SoilSensor_init(void);
  * Returns false if either I2C transaction failed.
  */
 bool SoilSensor_read(uint16_t *moistureRaw, int16_t *tempCentiC);
+
+/*
+ * Returns the I2C bus handle opened by SoilSensor_init() (NULL if not yet
+ * called or if opening the bus failed), so other drivers on the same
+ * BoosterPack stack - e.g. the battery gauge - can share it instead of
+ * opening the bus a second time.
+ */
+I2C_Handle SoilSensor_getI2CHandle(void);
 
 #endif /* SOIL_SENSOR_H_ */

@@ -232,6 +232,14 @@
         </file>
         <file path="../../app/soil_history.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
         </file>
+        <file path="../../app/battery_gauge.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/battery_gauge.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app">
+        </file>
+        <file path="../../app/Profiles/battery_service.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
+        <file path="../../app/Profiles/battery_service.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/common/src/util.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
         </file>
         <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/common/util.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util">
@@ -253,6 +261,32 @@
         <file path="../../app/Profiles/soil_sensor_profile.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
         </file>
         <file path="../../app/Profiles/soil_sensor_profile.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
+        <file path="../../app/Profiles/app_oad.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="app/Profiles">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/services/oad/oad_service.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Services/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/services/oad/src/oad_service.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Services/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/services/oad/oad_reset_service.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Services/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/services/oad/src/oad_reset_service.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Services/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/profiles/oad/oad_profile.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/profiles/oad/src/oad_profile.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/profiles/oad/ms_oad_profile.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/profiles/oad/src/ms_oad_profile.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Profiles/oad">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/common/cc26xx/flash_interface/flash_interface.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util/SwUpdate">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/sw_update/sw_update.h" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util/SwUpdate">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/sw_update/src/sw_update.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util/SwUpdate">
+        </file>
+        <file path="${COM_TI_SIMPLELINK_LOWPOWER_F3_SDK_INSTALL_DIR}/source/ti/ble/app_util/sw_update/src/flash_interface_oad.c" openOnCreation="false" excludeFromBuild="false" action="link" targetDirectory="common/Util/SwUpdate">
         </file>
         <file path="../../freertos/soil_sensor.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

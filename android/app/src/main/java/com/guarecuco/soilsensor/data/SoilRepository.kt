@@ -7,8 +7,10 @@ import com.guarecuco.soilsensor.ble.SoilRecord
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -36,11 +38,24 @@ class SoilRepository(context: Context, private val scope: CoroutineScope) {
     val bleManager = SoilBleManager(context)
 
     @Volatile private var anchorMillis: Long? = null
+    private val pendingHistory = mutableListOf<Pair<String, SoilRecord>>()
+
+    private val _batteryPercent = MutableStateFlow<Int?>(null)
+    private val _batteryCharging = MutableStateFlow<Boolean?>(null)
+    private val _firmwareVersion = MutableStateFlow<String?>(null)
 
     val connectionState: StateFlow<SoilConnectionState> = bleManager.connectionState
     val discoveredDevices = bleManager.discoveredDevices
     val connectedDeviceAddress: StateFlow<String?> = bleManager.connectedAddress
     val connectedDeviceName: StateFlow<String?> = bleManager.connectedName
+    // Live-only telemetry from the BOOSTXL-BATPAKMKII fuel gauge (if attached) -
+    // not persisted, unlike the moisture/temp readings.
+    val batteryPercent: StateFlow<Int?> = _batteryPercent.asStateFlow()
+    val batteryCharging: StateFlow<Boolean?> = _batteryCharging.asStateFlow()
+    // Running firmware's own version, read from the Device Information
+    // Service on connect; null on older firmware that predates it, or
+    // before a connection has completed.
+    val firmwareVersion: StateFlow<String?> = _firmwareVersion.asStateFlow()
 
     val readings = connectedDeviceAddress
         .flatMapLatest { address ->
@@ -57,6 +72,9 @@ class SoilRepository(context: Context, private val scope: CoroutineScope) {
 
         bleManager.onCurrentReading = { record -> onReading(record, isLive = true) }
         bleManager.onHistoryRecord = { record, _ -> onReading(record, isLive = false) }
+        bleManager.onBatteryLevel = { percent -> _batteryPercent.value = percent }
+        bleManager.onBatteryPowerState = { isCharging -> _batteryCharging.value = isCharging }
+        bleManager.onFirmwareVersion = { version -> _firmwareVersion.value = version }
 
         bleManager.resolveStartIndex = { baseSeq, count ->
             val address = bleManager.connectedAddress.value
@@ -91,13 +109,34 @@ class SoilRepository(context: Context, private val scope: CoroutineScope) {
 
     private fun onReading(record: SoilRecord, isLive: Boolean) {
         val address = bleManager.connectedAddress.value ?: return
-        val nowAnchor = System.currentTimeMillis() - record.uptimeSec * 1000L
-        if (isLive) {
-            anchorMillis = nowAnchor
-        }
-        val anchor = anchorMillis ?: nowAnchor
-        val timestamp = anchor + record.uptimeSec * 1000L
 
+        if (isLive) {
+            val anchor = System.currentTimeMillis() - record.uptimeSec * 1000L
+            anchorMillis = anchor
+            insert(address, record, anchor)
+            if (pendingHistory.isNotEmpty()) {
+                val buffered = pendingHistory.toList()
+                pendingHistory.clear()
+                buffered.forEach { (pendingAddress, pendingRecord) -> insert(pendingAddress, pendingRecord, anchor) }
+            }
+            return
+        }
+
+        // History records must never be timestamped from their own arrival
+        // time - that would tag them with when they were downloaded, not
+        // when they were captured. If the anchor (established from this
+        // connection's live reading) isn't available yet, hold the record
+        // until it is instead of guessing.
+        val anchor = anchorMillis
+        if (anchor == null) {
+            pendingHistory.add(address to record)
+            return
+        }
+        insert(address, record, anchor)
+    }
+
+    private fun insert(address: String, record: SoilRecord, anchor: Long) {
+        val timestamp = anchor + record.uptimeSec * 1000L
         scope.launch(Dispatchers.IO) {
             dao.insert(
                 SoilReadingEntity(

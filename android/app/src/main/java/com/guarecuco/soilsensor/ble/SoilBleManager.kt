@@ -81,6 +81,9 @@ class SoilBleManager(context: Context) {
     var onCurrentReading: (SoilRecord) -> Unit = {}
     var onHistoryRecord: (record: SoilRecord, absoluteSeq: Long) -> Unit = { _, _ -> }
     var onSyncComplete: (newestSyncedSeq: Long?) -> Unit = {}
+    var onBatteryLevel: (percent: Int) -> Unit = {}
+    var onBatteryPowerState: (isCharging: Boolean) -> Unit = {}
+    var onFirmwareVersion: (version: String) -> Unit = {}
 
     /**
      * Given the absolute sequence number of the oldest record currently held
@@ -212,8 +215,29 @@ class SoilBleManager(context: Context) {
             val currentReadingChar = service.getCharacteristic(BleUuids.CURRENT_READING)
             enqueue { enableNotify(g, currentReadingChar) }
             enqueue { readCharacteristic(g, currentReadingChar) }
+
+            // Standard Battery Service, a separate GATT service from the
+            // custom soil sensor one above - absent on older firmware that
+            // predates the BOOSTXL-BATPAKMKII integration, so skip it rather
+            // than enqueue a read against a characteristic that doesn't exist.
+            val batteryService = g.getService(BleUuids.BATTERY_SERVICE)
+            batteryService?.getCharacteristic(BleUuids.BATTERY_LEVEL)?.let { batteryLevelChar ->
+                enqueue { enableNotify(g, batteryLevelChar) }
+                enqueue { readCharacteristic(g, batteryLevelChar) }
+            }
+            batteryService?.getCharacteristic(BleUuids.BATTERY_POWER_STATE)?.let { powerStateChar ->
+                enqueue { enableNotify(g, powerStateChar) }
+                enqueue { readCharacteristic(g, powerStateChar) }
+            }
+
             enqueue { readCharacteristic(g, service.getCharacteristic(BleUuids.HISTORY_BASE_SEQ)) }
             enqueue { readCharacteristic(g, service.getCharacteristic(BleUuids.HISTORY_COUNT)) }
+
+            // Absent on older firmware that predates version reporting.
+            g.getService(BleUuids.DEVICE_INFO_SERVICE)
+                ?.getCharacteristic(BleUuids.FIRMWARE_REVISION)
+                ?.let { fwRevChar -> enqueue { readCharacteristic(g, fwRevChar) } }
+
             runNext()
         }
 
@@ -237,8 +261,10 @@ class SoilBleManager(context: Context) {
 
         @Suppress("DEPRECATION")
         override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-            if (characteristic.uuid == BleUuids.CURRENT_READING) {
-                SoilRecord.parse(characteristic.value)?.let(onCurrentReading)
+            when (characteristic.uuid) {
+                BleUuids.CURRENT_READING -> SoilRecord.parse(characteristic.value)?.let(onCurrentReading)
+                BleUuids.BATTERY_LEVEL -> characteristic.value.toUInt8()?.let(onBatteryLevel)
+                BleUuids.BATTERY_POWER_STATE -> characteristic.value.toIsCharging()?.let(onBatteryPowerState)
             }
         }
 
@@ -246,6 +272,12 @@ class SoilBleManager(context: Context) {
             when (characteristic.uuid) {
                 BleUuids.CURRENT_READING -> {
                     SoilRecord.parse(value)?.let(onCurrentReading)
+                }
+                BleUuids.BATTERY_LEVEL -> {
+                    value.toUInt8()?.let(onBatteryLevel)
+                }
+                BleUuids.BATTERY_POWER_STATE -> {
+                    value.toIsCharging()?.let(onBatteryPowerState)
                 }
                 BleUuids.HISTORY_BASE_SEQ -> {
                     historyBaseSeq = value.toUInt32LE() ?: 0L
@@ -256,6 +288,9 @@ class SoilBleManager(context: Context) {
                     historyIndex = resolveStartIndex(historyBaseSeq, historyCount).coerceIn(0, historyCount)
                     Log.d(TAG, "history count=$historyCount startIndex=$historyIndex")
                     queueNextHistoryStep(g)
+                }
+                BleUuids.FIRMWARE_REVISION -> {
+                    onFirmwareVersion(String(value, Charsets.UTF_8))
                 }
                 BleUuids.HISTORY_RECORD -> {
                     SoilRecord.parse(value)?.let { onHistoryRecord(it, historyBaseSeq + historyIndex) }

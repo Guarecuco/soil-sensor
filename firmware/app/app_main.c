@@ -153,12 +153,21 @@ void App_StackInitDoneHandler(gapDeviceInitDoneEvent_t *deviceInitDoneData)
     {
         // TODO: Call Error Handler
     }
+#if defined(OAD_CFG)
+    status = OAD_start();
+    if(status != SUCCESS)
+    {
+        // TODO: Call Error Handler
+    }
+#endif
 #endif
 
     // This is a peripheral-only build (see ble.deviceRole in
-    // soil_sensor.syscfg) - broadcaster/central/observer/OAD/L2CAP roles
-    // were dropped, along with their start-up calls here, since they can
-    // never be reached from this configuration.
+    // soil_sensor.syscfg) - broadcaster/central/observer/L2CAP roles were
+    // dropped, along with their start-up calls here, since they can never
+    // be reached from this configuration. OAD is the exception (started
+    // above): it's on-chip OAD, using MCUboot + a separate basic_persistent
+    // image to actually receive firmware over BLE.
     status = Peripheral_start();
     if(status != SUCCESS)
     {

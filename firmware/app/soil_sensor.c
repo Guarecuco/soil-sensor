@@ -111,3 +111,8 @@ bool SoilSensor_read(uint16_t *moistureRaw, int16_t *tempCentiC)
 
     return true;
 }
+
+I2C_Handle SoilSensor_getI2CHandle(void)
+{
+    return i2cHandle;
+}

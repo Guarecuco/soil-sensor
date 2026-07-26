@@ -19,6 +19,18 @@
  *                      "last sequence synced" and compute which index to
  *                      resume from instead of re-reading the whole history
  *                      on every reconnect.
+ *
+ * Firmware version is reported separately over the standard Device
+ * Information Service (0x180A / Firmware Revision String 0x2A26, TI's
+ * bundled dev_info_service - see app/Profiles/app_dev_info.c) rather than
+ * a characteristic here, for the same reason battery level uses a BLE
+ * SIG service instead of a custom one.
+ *
+ * Battery level is reported separately over the standard BLE Battery
+ * Service (0x180F / 0x2A19, see Profiles/battery_service.h) rather than a
+ * characteristic on this custom service, since it's a BLE SIG-adopted
+ * profile that clients (including Android's own BLE stack) already know
+ * how to recognize.
  */
 
 #ifndef SOILSENSORPROFILE_H

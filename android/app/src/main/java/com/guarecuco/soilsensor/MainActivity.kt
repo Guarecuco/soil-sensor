@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import com.guarecuco.soilsensor.ble.SoilConnectionState
 import com.guarecuco.soilsensor.ui.SoilScreen
 import com.guarecuco.soilsensor.ui.SoilSensorTheme
 import com.guarecuco.soilsensor.ui.SoilViewModel
@@ -23,7 +24,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { grants ->
         if (grants.values.all { it }) {
-            viewModel.startScan()
+            scanOrReconnect()
         }
     }
 
@@ -33,7 +34,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             SoilSensorTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    SoilScreen(viewModel = viewModel, onRequestConnect = ::connectWithPermissions)
+                    SoilScreen(
+                        viewModel = viewModel,
+                        onRequestConnect = ::connectWithPermissions,
+                        onRefresh = ::connectWithPermissions,
+                    )
                 }
             }
         }
@@ -45,9 +50,24 @@ class MainActivity : ComponentActivity() {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
         if (missing.isEmpty()) {
-            viewModel.startScan()
+            scanOrReconnect()
         } else {
             requestPermissions.launch(missing.toTypedArray())
+        }
+    }
+
+    // A known device (from a previous session) is reconnected to directly,
+    // pulling fresh data straight away - only an unpaired app falls back to
+    // scanning so the user can pick a sensor.
+    private fun scanOrReconnect() {
+        val address = viewModel.connectedDeviceAddress.value
+        if (address != null) {
+            if (viewModel.connectionState.value is SoilConnectionState.Ready) {
+                viewModel.disconnect()
+            }
+            viewModel.connectToDevice(address, viewModel.connectedDeviceName.value)
+        } else {
+            viewModel.startScan()
         }
     }
 }

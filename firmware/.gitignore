@@ -3,6 +3,7 @@ freertos/ticlang/*.obj
 freertos/ticlang/*.out
 freertos/ticlang/*.hex
 freertos/ticlang/*.map
+freertos/ticlang/*.bin
 freertos/ticlang/ti_*.c
 freertos/ticlang/ti_*.h
 freertos/ticlang/ti_ble_oad_*.cfg

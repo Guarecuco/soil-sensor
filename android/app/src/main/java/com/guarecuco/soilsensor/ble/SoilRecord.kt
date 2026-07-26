@@ -26,6 +26,20 @@ data class SoilRecord(
     }
 }
 
+fun ByteArray.toUInt8(): Int? {
+    if (isEmpty()) return null
+    return this[0].toInt() and 0xFF
+}
+
+/**
+ * Battery Power State (BLE SIG 0x2A1A) is one packed byte, four 2-bit
+ * fields. Charging State lives in bits 4-5; value 3 means "Charging".
+ */
+fun ByteArray.toIsCharging(): Boolean? {
+    val state = toUInt8() ?: return null
+    return ((state shr 4) and 0x3) == 3
+}
+
 fun ByteArray.toUInt16LE(): Int? {
     if (size < 2) return null
     return (this[0].toInt() and 0xFF) or ((this[1].toInt() and 0xFF) shl 8)

@@ -154,6 +154,17 @@ bStatus_t DevInfo_start(void);
 bStatus_t SoilSensor_start(void);
 
 /*********************************************************************
+ * @fn      OAD_start
+ *
+ * @brief   This function is called after stack initialization,
+ *          the purpose of this function is to initialize and
+ *          register the OAD profile and service.
+ *
+ * @return  SUCCESS or stack call status
+ */
+bStatus_t OAD_start(void);
+
+/*********************************************************************
  * @fn      Menu_start
  *
  * @brief   This function is called after stack initialization,

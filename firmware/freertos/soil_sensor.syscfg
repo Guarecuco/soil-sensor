@@ -41,7 +41,8 @@ var needsDisplay = true;
 var needsButtons = false; // unused - nothing in this project reads CONFIG_BUTTON_0/1
 var needsLeds = false; // unused - nothing in this project drives CONFIG_GPIO_LED_RED/GREEN
 var needsNvs = true;
-var needsOad = false;
+var needsOad = true;
+var oadMethod = "OAD_APP_ONCHIP";
 var heapSize = 0x00004D50;
 var timerStackSize = 0x00000190;
 var idleStackSize = 0x00000130;
@@ -67,6 +68,11 @@ ble.advSet1.advData1.advertisingFlags = ["GAP_ADTYPE_FLAGS_BREDR_NOT_SUPPORTED",
 ble.advSet1.advData1.GAP_ADTYPE_128BIT_MORE = true;
 ble.advSet1.advData1.numOfUUIDs128More = 1;
 ble.advSet1.advData1.UUID0128More = system.utils.bigInt("00000000000000b00040510400aa00f0", 16);
+// Advertise the standard Battery Service UUID too, so a scanner can tell
+// this device reports battery status before ever connecting
+ble.advSet1.advData1.GAP_ADTYPE_16BIT_MORE = true;
+ble.advSet1.advData1.numOfUUIDs16More = 1;
+ble.advSet1.advData1.UUID016More = 0x180F;
 // Complete local name
 ble.advSet1.scanRes1.GAP_ADTYPE_LOCAL_NAME_COMPLETE = true;
 const connIntervalRange = system.getScript("/ti/ble/ble_common.js").getPeripheralConnIntervalRange();
